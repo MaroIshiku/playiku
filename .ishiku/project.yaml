@@ -7,7 +7,7 @@
   "updates": { "timezone": "Europe/Berlin", "weekly_schedule": { "day": "monday", "time": "05:00" } },
   "repository": { "default_branch": "main", "container_registry": "ghcr.io" },
   "verification": { "commands": [
-    { "name": "application", "command": "npm ci && npm run check && npm run test:e2e && npm audit --audit-level=high", "required_for_verified": true },
+    { "name": "application", "command": "npm ci && node scripts/ensure-playwright.mjs && npm run check && npm run test:e2e && npm audit --audit-level=high", "required_for_verified": true },
     { "name": "compose", "command": "docker compose config --quiet", "required_for_verified": true },
     { "name": "container", "command": "docker build --check . && docker build -t playiku:verify .", "required_for_verified": true }
   ] },
