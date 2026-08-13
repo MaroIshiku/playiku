@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "primary_platform": "ZimaOS",
+  "image": {
+    "registry": "ghcr.io",
+    "owner": "maroishiku",
+    "default_tag": "latest",
+    "primary_compose_uses_direct_image": true
+  },
+  "ui_compatibility": {
+    "icon_required": true,
+    "icon_url_scheme": "https",
+    "maximum_interpolation_variables_in_primary_compose": 0,
+    "prefer_direct_scalar_values": true,
+    "external_env_is_alternative_only": true
+  },
+  "storage": {
+    "host_path_pattern": "/DATA/AppData/i_<app-id>/Data",
+    "container_data_path": "/data",
+    "migration_policy": "breaking-change-allowed",
+    "requires_backup_before_update": true
+  },
+  "setup_secret": {
+    "preferred_environment_name": "ISHIKU_SETUP_SECRET",
+    "minimum_characters": 32,
+    "compose_cleartext_supported": true,
+    "primary_compose_uses_cleartext_placeholder": true,
+    "alternative_dot_env_supported": true,
+    "must_not_ship_a_real_or_reusable_secret": true
+  },
+  "host_ports": {
+    "range": "8504-8550",
+    "iana_status_checked": "2026-08-10",
+    "iana_registry": "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml",
+    "reserved_or_assigned_ports_avoided": [8500, 8501, 8502, 8503],
+    "applications": {
+      "dropiku": 8504,
+      "dyniku": 8505,
+      "keyku": 8506,
+      "libiku": 8507,
+      "meiku": 8508,
+      "nestiku": 8509,
+      "pingiku": 8510,
+      "pulliku": 8511,
+      "seediku": 8512,
+      "tuniku": 8513
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Playiku — Casual Games",
+  "short_name": "Playiku",
+  "description": "A self-hosted collection of casual browser games.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf8ff",
+  "theme_color": "#7656b5",
+  "icons": [{ "src": "/playiku-icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }]
+}

@@ -1,0 +1,74 @@
+# ZimaOS-first primary Compose. Replace the setup-secret placeholder before first start.
+services:
+  playiku:
+    image: ghcr.io/maroishiku/playiku:latest
+    init: true
+    restart: unless-stopped
+    user: "65532:65532"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - target: 8080
+        published: "8514"
+        protocol: tcp
+    environment:
+      ISHIKU_SETUP_SECRET: "REPLACE-WITH-A-UNIQUE-SECRET-OF-AT-LEAST-32-CHARACTERS"
+      COOKIE_SECURE: "false"
+      TZ: Europe/Berlin
+    volumes:
+      - type: bind
+        source: /DATA/AppData/i_playiku/Data
+        target: /data
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    healthcheck:
+      test:
+        - CMD
+        - /usr/local/bin/node
+        - -e
+        - fetch('http://127.0.0.1:8080/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    x-casaos:
+      envs:
+        - container: ISHIKU_SETUP_SECRET
+          description:
+            en_us: Unique first-run setup secret with at least 32 characters
+      ports:
+        - container: "8080"
+          description:
+            en_us: Web interface
+      volumes:
+        - container: /data
+          description:
+            en_us: Persistent application data
+
+x-casaos:
+  id: dev.ishiku.playiku
+  architectures:
+    - amd64
+  main: playiku
+  author: ishiku
+  category: Games
+  developer: ishiku
+  title:
+    en_us: Playiku
+  tagline:
+    en_us: Self-hosted casual browser games
+  description:
+    en_us: A private collection of six polished casual games with per-user progress and statistics.
+  icon: https://cdn.jsdelivr.net/gh/MaroIshiku/playiku@main/public/playiku-icon.png
+  index: /
+  port_map: "8514"
+  repo: https://github.com/MaroIshiku/playiku

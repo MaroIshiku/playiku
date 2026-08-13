@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.env
+secrets/
+*.sqlite*
+.ishiku/reports/*.json
+.ishiku/reports/*.sarif
+playwright-report/
+test-results/
