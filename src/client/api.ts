@@ -1,4 +1,4 @@
-export type ThemeName = 'violet' | 'ocean' | 'forest' | 'sunset' | 'rose' | 'mono';
+export type ThemeName = 'lavender' | 'mint' | 'sky' | 'amber' | 'rose' | 'graphite';
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type Settings = { theme: ThemeName; mode: ThemeMode; sound: boolean; haptics: boolean; animations: boolean; reducedMotion: boolean; autoResume: boolean };
 export type Statistic = { game_id: string; games_played: number; games_won: number; total_play_ms: number; best_score: number | null; best_time_ms: number | null; current_streak: number; longest_streak: number; last_played_at: number | null };

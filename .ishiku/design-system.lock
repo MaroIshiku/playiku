@@ -1,0 +1,31 @@
+{
+  "$schema": "./kit/schemas/design-lock.schema.json",
+  "schema_version": 1,
+  "contract": {
+    "id": "ishiku-design-5",
+    "version": "5.0.0",
+    "sha256": "46628d1b69e5c27c3a339a31afbb7c3bed8d148b2fb0916c975407d86e9a1516"
+  },
+  "application": {
+    "id": "playiku",
+    "authentication": "standard-account",
+    "locale": "en"
+  },
+  "implementation": [
+    {
+      "path": "src/client/styles.css",
+      "sha256": "628fe914173c9e8a98fa679cf12bb7c477289cd9e36edb8dbfc5732fe6ae7dc3",
+      "roles": ["tokens", "components"]
+    },
+    {
+      "path": "src/client/main.tsx",
+      "sha256": "13ebc3286467c45570f88baba273e34fd461cfba95a434d91513f0d4dd270748",
+      "roles": ["components", "theme-controller"]
+    },
+    {
+      "path": "public/playiku-icon.png",
+      "sha256": "e1e51ea4f8cdce3bdad72e5375b47564f46d94718110bfba24ce9a687e3ce703",
+      "roles": ["icons"]
+    }
+  ]
+}

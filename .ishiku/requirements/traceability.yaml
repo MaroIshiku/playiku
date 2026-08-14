@@ -5,7 +5,7 @@
     {
       "id": "PLAT-001",
       "implementation": ["src/server/config.ts", "src/server/app.ts", "src/server/database.ts"],
-      "tests": { "unit": [], "integration": ["tests/app.test.ts: platform endpoints"], "e2e": [], "security": ["scripts/verify-container.ps1"] },
+      "tests": { "unit": [], "integration": ["tests/app.test.ts: platform endpoints and HTTP-safe CSP"], "e2e": [], "security": ["scripts/verify-container.ps1"] },
       "status": "verified"
     },
     {
@@ -17,13 +17,13 @@
     {
       "id": "SHELL-001",
       "implementation": ["src/client/main.tsx", "src/client/styles.css"],
-      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: library and five responsive viewports"], "security": [] },
+      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: library and five responsive viewports", "embedded browser: HTTP setup and authenticated shell"] , "security": [] },
       "status": "verified"
     },
     {
       "id": "THEME-001",
-      "implementation": ["src/client/main.tsx", "src/client/styles.css", "src/server/app.ts"],
-      "tests": { "unit": [], "integration": ["tests/app.test.ts: persisted settings"], "e2e": ["e2e/playiku.e2e.ts: six themes in light and dark modes"], "security": [] },
+      "implementation": ["src/client/main.tsx", "src/client/styles.css", "src/server/app.ts", ".ishiku/design-system.lock"],
+      "tests": { "unit": [], "integration": ["tests/app.test.ts: persisted settings and legacy theme migration"], "e2e": ["e2e/playiku.e2e.ts: six Design System v5 themes in light and dark modes", "embedded browser: graphite dark mode"] , "security": [] },
       "status": "verified"
     },
     {
@@ -83,7 +83,7 @@
     {
       "id": "A11Y-001",
       "implementation": ["src/client/main.tsx", "src/client/styles.css", "src/client/games"],
-      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: Axe home and every game, 60 responsive theme screenshots, Chromium/Firefox/mobile"], "security": [] },
+      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: Axe home and every game, 60 responsive theme screenshots, Chromium/Firefox/mobile", "embedded browser: zero horizontal overflow and empty console"] , "security": [] },
       "status": "verified"
     },
     {
