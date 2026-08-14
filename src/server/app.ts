@@ -60,7 +60,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   const { sqlite, db } = openDatabase(options.databasePath);
   await app.register(cookie);
   await app.register(helmet, { contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", 'data:'], connectSrc: ["'self'"], objectSrc: ["'none'"], baseUri: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: null } }, hsts: options.cookieSecure });
-  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+  await app.register(rateLimit, { max: 300, timeWindow: '1 minute' });
 
   const audit = (eventType: string, actorId: number | null, result: string, requestId: string) => sqlite.prepare('INSERT INTO audit_events (event_type, actor_id, result, request_id, occurred_at) VALUES (?, ?, ?, ?, ?)').run(eventType, actorId, result, requestId, Date.now());
   const error = (reply: FastifyReply, request: FastifyRequest, status: number, code: string, message: string) => reply.code(status).send({ code, message, requestId: request.id });
