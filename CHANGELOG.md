@@ -2,7 +2,7 @@
 
 All notable changes follow semantic versioning.
 
-## 0.1.0 - 2026-08-14
+## 0.1.1 - 2026-08-14
 
 - Added the responsive Playiku library, six themes, light/dark modes, profile navigation, settings, statistics, milestones, About data, and PWA shell.
 - Added modular Sudoku, Minesweeper, 2048, Nonogram, Snake, and Klondike Solitaire games.
@@ -10,6 +10,7 @@ All notable changes follow semantic versioning.
 - Added deterministic engine tests, API/security integration tests, Axe coverage, and responsive visual artifacts.
 - Added hardened Docker/Compose delivery, operational documentation, pinned GitHub Actions, SBOM, and provenance publishing.
 - Added digest-preserving promotion to the ZimaOS `latest` channel, high/critical image scanning, SPDX release assets, and evidence-backed GitHub release notes.
+- Normalized the GHCR repository path to lowercase after the unpublished `v0.1.0` tag exposed a registry compatibility issue.
 
 ### Compatibility and migration
 

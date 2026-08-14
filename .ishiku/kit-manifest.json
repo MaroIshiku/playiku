@@ -87,10 +87,6 @@
       "sha256": "3068349a7624842c012a225f2ccf8693cb2f59dba73acc92ffaf58d19b53e47c"
     },
     {
-      "path": ".github/workflows/ishiku-release-release.yml",
-      "sha256": "0f7acba4965aa4f23ca0f01db6b6e7aa67c9c388a5b7834961205d067ae7aa5b"
-    },
-    {
       "path": ".github/workflows/ishiku-upstream-update-upstream-update.yml",
       "sha256": "a2d6630c1c13ee2e073f50b5ece4706369032db83969b10a5073580372978916"
     },
@@ -232,5 +228,7 @@
   "allowed_overrides": [
     ".ishiku/overrides/"
   ],
-  "local_changes": []
+  "local_changes": [
+    ".github/workflows/ishiku-release-release.yml"
+  ]
 }
