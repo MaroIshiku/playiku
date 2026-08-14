@@ -1,0 +1,14 @@
+{
+  "id": "OVR-001",
+  "reason": "The managed release workflow preserves the mixed-case GitHub owner name, while GHCR requires repository names to be lowercase.",
+  "policy": ".ishiku/kit/policies/releases.md image publication",
+  "security_assessment": "The application-owned change only normalizes the fixed GHCR repository path to lowercase and does not broaden events, permissions, secrets, or publication targets.",
+  "owner": "MaroIshiku",
+  "review_date": "2026-11-14",
+  "tests": [
+    "actionlint .github/workflows/*.yml",
+    "node .ishiku/kit/scripts/check-release .",
+    "node .ishiku/kit/scripts/verify-app . --full",
+    "GitHub tag release and digest-equivalence checks"
+  ]
+}
