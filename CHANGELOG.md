@@ -9,6 +9,7 @@ All notable changes follow semantic versioning.
 - Added one-time administrator setup, Argon2id authentication, revocable sessions, CSRF protection, audit events, per-user persistence, and deterministic daily seeds.
 - Added deterministic engine tests, API/security integration tests, Axe coverage, and responsive visual artifacts.
 - Added hardened Docker/Compose delivery, operational documentation, pinned GitHub Actions, SBOM, and provenance publishing.
+- Added digest-preserving promotion to the ZimaOS `latest` channel, high/critical image scanning, SPDX release assets, and evidence-backed GitHub release notes.
 
 ### Compatibility and migration
 
