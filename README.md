@@ -48,7 +48,7 @@ node .ishiku/kit/scripts/verify-app . --full
 
 Requirements live in `appspec.yaml`; traceability is generated under `.ishiku/requirements/`. Release workflows build once, publish an immutable versioned GHCR image with SBOM and provenance, scan that exact digest, and then promote the same digest to `latest` for ZimaOS. Privileged release jobs never receive secrets from untrusted pull-request code.
 
-Version `0.9.0` is the stable preview release for the `latest` channel. The remaining physical-device and human visual-approval steps are tracked in `docs/RELEASE_CHECKLIST.md` and remain required before a future `1.0.0` release.
+Version `0.9.1` is the stable preview release for the `latest` channel. The remaining physical-device and human visual-approval steps are tracked in `docs/RELEASE_CHECKLIST.md` and remain required before a future `1.0.0` release.
 
 ## License
 

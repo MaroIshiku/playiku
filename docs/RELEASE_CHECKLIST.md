@@ -1,6 +1,6 @@
 # Playiku 0.9 release checklist
 
-`0.9.0` is the stable preview release for the `latest` channel. Its publication is authorized only after every automated gate below passes. The human exploratory checks remain the acceptance checklist for a future `1.0.0` release and must not be recorded as complete without direct human evidence.
+`0.9.1` is the stable preview release for the `latest` channel. Its publication is authorized only after every automated gate below passes. The human exploratory checks remain the acceptance checklist for a future `1.0.0` release and must not be recorded as complete without direct human evidence.
 
 ## Automated release gates
 
@@ -24,4 +24,4 @@
 
 ## 0.9 publication
 
-After the automated gates pass, merge the `0.9.0` release metadata and create tag `v0.9.0`. The release workflow must build the tag once, scan its immutable digest, attach evidence, and only then promote that same digest to `latest`. Before a future `v1.0.0`, complete and record every human exploratory item above, update the version metadata, and repeat the full release gate.
+After the automated gates pass, merge the `0.9.1` release metadata and create tag `v0.9.1`. The release workflow must build the tag once, scan its immutable digest, attach evidence, and only then promote that same digest to `latest`. Before a future `v1.0.0`, complete and record every human exploratory item above, update the version metadata, and repeat the full release gate.

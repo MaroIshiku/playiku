@@ -2,6 +2,16 @@
 
 All notable changes follow semantic versioning.
 
+## 0.9.1 - 2026-08-14
+
+- Prevented stale HTML and service-worker responses from retaining obsolete asset URLs after an upgrade, which could leave HTTP appliance deployments on a white screen.
+- Made the application shell and service worker revalidate on every navigation while retaining immutable caching for hashed JavaScript and CSS assets.
+- Added automatic service-worker update checks, atomic cache replacement, and regression coverage for release-safe cache headers and offline fallback.
+
+### Compatibility and migration
+
+The SQLite schema remains at version 1. No data migration is required. A browser that already cached the affected 0.9.0 shell may require one hard refresh or clearing Playiku site data once; subsequent releases update automatically.
+
 ## 0.9.0 - 2026-08-14
 
 - Completed the version 1 game contract with shared How to play guidance, accessible confirmations, round feedback, configurable default games, editable profiles, and revocable session management.

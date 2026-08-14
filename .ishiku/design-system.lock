@@ -19,7 +19,7 @@
     },
     {
       "path": "src/client/main.tsx",
-      "sha256": "336ccb79aae9b88bc314151c0088362cf8b0c7cdba92a5dcd28e93ae880674c8",
+      "sha256": "202d964fc6d3a2f6bcb89e5462e86ad78c71577b370b8a9bafda6faef70c638f",
       "roles": ["components", "theme-controller"]
     },
     {

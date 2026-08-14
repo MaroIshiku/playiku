@@ -6,14 +6,19 @@ const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 test('first run, games, accounts, accessibility, themes, daily play, and offline shell', async ({ page, context }, testInfo) => {
   await page.addInitScript({ content: axeSource });
-  await page.goto('/');
+  const shellResponse = await page.goto('/');
+  expect(shellResponse?.headers()['cache-control']).toBe('no-cache, no-store, must-revalidate');
   const setup = page.getByRole('heading', { name: 'Set up Playiku' });
   const manifest = await page.request.get('/manifest.webmanifest');
   expect(manifest.ok()).toBeTruthy();
   expect((await manifest.json()).name).toBe('Playiku — Casual Games');
   const serviceWorker = await page.request.get('/sw.js');
   expect(serviceWorker.ok()).toBeTruthy();
-  expect(await serviceWorker.text()).toContain("const CACHE = 'playiku-shell-v2'");
+  expect(serviceWorker.headers()['cache-control']).toBe('no-cache, no-store, must-revalidate');
+  expect(await serviceWorker.text()).toContain("const CACHE = 'playiku-shell-v3'");
+  const scriptPath = (await shellResponse?.text())?.match(/src="([^"]+\.js)"/)?.[1];
+  expect(scriptPath).toBeTruthy();
+  expect((await page.request.get(scriptPath!)).headers()['cache-control']).toBe('public, max-age=31536000, immutable');
   if (await setup.isVisible()) { await page.getByLabel('Display name').fill('E2E Admin'); await page.getByLabel('Username').fill('e2e-admin'); await page.getByLabel('One-time setup secret').fill('synthetic-e2e-setup-material-2026-0001'); await page.getByLabel('Administrator password').fill('synthetic-e2e-password'); await page.getByRole('button', { name: 'Create administrator' }).click(); }
   else { await page.getByLabel('Username').fill('e2e-admin'); await page.getByLabel('Password').fill('synthetic-e2e-password'); await page.getByRole('button', { name: 'Sign in' }).click(); }
   await expect(page.getByRole('heading', { name: 'Games', exact: true })).toBeVisible();
@@ -47,7 +52,7 @@ test('first run, games, accounts, accessibility, themes, daily play, and offline
     await expect(page.getByRole('dialog')).toHaveCount(0);
     if (testInfo.project.name === 'desktop-chromium') { for (const viewport of [{ name: 'mobile', width: 390, height: 844 }, { name: 'desktop', width: 1440, height: 900 }]) { await page.setViewportSize(viewport); await page.screenshot({ path: `test-results/visuals/game-${game.name.toLowerCase()}-${viewport.name}.png`, fullPage: true }); expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true); } }
     if (game.name === 'Minesweeper') { await page.getByLabel('Difficulty').selectOption('Custom'); await expect(page.locator('.mine-cell')).toHaveCount(144); await page.locator('.mine-cell').first().click(); await expect(page.locator('.mine-cell').first()).not.toHaveAttribute('aria-label', 'Mine'); }
-    if (game.name === 'Nonogram') { const cells = page.locator('.nono-cell'); await cells.first().hover(); await page.mouse.down(); await cells.nth(2).hover(); await page.mouse.up(); expect(await page.locator('.nono-cell.mark-1').count()).toBeGreaterThanOrEqual(2); await page.getByRole('button', { name: 'Undo' }).click(); await page.getByRole('button', { name: 'Hint' }).click(); await expect(page.getByRole('button', { name: 'Undo' })).toBeEnabled(); await page.getByRole('button', { name: 'Undo' }).click(); }
+    if (game.name === 'Nonogram') { const cells = page.locator('.nono-cell'), pointer = { bubbles: true, button: 0, pointerId: 1, pointerType: 'touch', isPrimary: true }; await cells.first().dispatchEvent('pointerdown', pointer); await cells.nth(1).dispatchEvent('pointerover', pointer); await cells.nth(2).dispatchEvent('pointerover', pointer); await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true }))); expect(await page.locator('.nono-cell.mark-1').count()).toBeGreaterThanOrEqual(3); await page.getByRole('button', { name: 'Undo' }).click(); await page.getByRole('button', { name: 'Hint' }).click(); await expect(page.getByRole('button', { name: 'Undo' })).toBeEnabled(); await page.getByRole('button', { name: 'Undo' }).click(); }
     if (game.name === 'Solitaire') { expect(await page.locator('.tableau-column').evaluateAll((columns) => columns.every((column) => { const cards = [...column.querySelectorAll('.tableau-card')]; return cards.length > 0 && !cards.at(-1)?.classList.contains('card-back') && cards.slice(0, -1).every((card) => card.classList.contains('card-back')); }))).toBe(true); }
     if (game.daily) { await page.getByRole('button', { name: 'Daily challenge' }).click(); await expect(page.locator('.game-header h1')).toContainText('Daily'); }
     if (game.name === '2048') { await page.keyboard.press('ArrowDown'); await page.waitForTimeout(500); const afterDaily = ((await (await page.request.get('/api/state')).json()) as { activeSessions: { gameId: string; state: unknown }[] }).activeSessions.find((session) => session.gameId === '2048')?.state; expect(afterDaily).toEqual(normal2048); }
