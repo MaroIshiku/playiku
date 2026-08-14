@@ -105,7 +105,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   app.get('/health/ready', async (_request, reply) => {
     try { sqlite.prepare('SELECT 1').get(); return { status: 'ready' }; } catch { return reply.code(503).send({ status: 'not-ready' }); }
   });
-  app.get('/api/manifest', async () => ({ id: 'playiku', name: 'Playiku', subtitle: 'Casual Games', version: process.env.APP_VERSION ?? '0.9.0', buildDate: process.env.BUILD_DATE ?? 'development', gitSha: process.env.GIT_SHA ?? 'development', schemaVersion: 1, license: 'Apache-2.0', repository: 'https://github.com/MaroIshiku/playiku' }));
+  app.get('/api/manifest', async () => ({ id: 'playiku', name: 'Playiku', subtitle: 'Casual Games', version: process.env.APP_VERSION ?? '0.9.1', buildDate: process.env.BUILD_DATE ?? 'development', gitSha: process.env.GIT_SHA ?? 'development', schemaVersion: 1, license: 'Apache-2.0', repository: 'https://github.com/MaroIshiku/playiku' }));
 
   app.get('/api/setup', async () => ({ required: !db.select().from(accounts).limit(1).get() }));
   app.post('/api/setup', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (request, reply) => {
@@ -346,8 +346,18 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
 
   const clientRoot = resolve('dist/client');
   if (options.serveFrontend !== false && existsSync(join(clientRoot, 'index.html'))) {
-    await app.register(fastifyStatic, { root: clientRoot, wildcard: false, maxAge: '1h', immutable: false });
-    app.get('/*', async (_request, reply) => reply.sendFile('index.html', { maxAge: 0, immutable: false }));
+    await app.register(fastifyStatic, {
+      root: clientRoot,
+      wildcard: false,
+      maxAge: '1h',
+      immutable: false,
+      setHeaders: (reply, pathName) => {
+        if (pathName.endsWith('index.html') || pathName.endsWith('sw.js')) reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        else if (/[\\/]assets[\\/].+-[A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(pathName)) reply.header('Cache-Control', 'public, max-age=31536000, immutable');
+        else if (pathName.endsWith('manifest.webmanifest')) reply.header('Cache-Control', 'no-cache');
+      }
+    });
+    app.get('/*', async (_request, reply) => reply.header('Cache-Control', 'no-cache, no-store, must-revalidate').sendFile('index.html', { maxAge: 0, immutable: false }));
   }
 
   app.addHook('onClose', async () => sqlite.close());

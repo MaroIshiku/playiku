@@ -1,4 +1,4 @@
-ARG APP_VERSION=0.9.0
+ARG APP_VERSION=0.9.1
 ARG BUILD_DATE=development
 ARG GIT_SHA=development
 

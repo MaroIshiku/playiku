@@ -165,7 +165,19 @@ function App() {
   const [status, setStatus] = useState<'loading' | 'setup' | 'login' | 'ready'>('loading'), [user, setUser] = useState<User>(), [fatal, setFatal] = useState('');
   useEffect(() => {
     void api.setupStatus().then(async ({ required }) => { if (required) setStatus('setup'); else { try { const session = await api.session(); setUser(session.user); setStatus('ready'); } catch { setStatus('login'); } } }).catch((cause) => setFatal(cause instanceof Error ? cause.message : 'Playiku could not start.'));
-    const register = () => { if ('serviceWorker' in navigator) void navigator.serviceWorker.register('/sw.js'); }, online = () => void flushOfflineQueue();
+    const register = () => {
+      if (!('serviceWorker' in navigator)) return;
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      if (hadController) {
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      }
+      void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((registration) => registration.update());
+    }, online = () => void flushOfflineQueue();
     if (document.readyState === 'complete') register(); else window.addEventListener('load', register);
     window.addEventListener('online', online); return () => { window.removeEventListener('load', register); window.removeEventListener('online', online); };
   }, []);
