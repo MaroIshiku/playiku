@@ -1,6 +1,6 @@
-# Playiku 1.0 release checklist
+# Playiku 0.9 release checklist
 
-`1.0.0-rc.1` is the full-release candidate. Automation must be green before these human checks begin. A prerelease tag may publish an immutable candidate image, but the workflow deliberately does not promote a tag containing `-` to `latest`.
+`0.9.0` is the stable preview release for the `latest` channel. Its publication is authorized only after every automated gate below passes. The human exploratory checks remain the acceptance checklist for a future `1.0.0` release and must not be recorded as complete without direct human evidence.
 
 ## Automated release gates
 
@@ -22,6 +22,6 @@
 - Upgrade a copy of a `v0.1.2` data volume, inspect accounts, settings, statistics, and one old save, then perform the documented rollback.
 - Confirm ZimaOS first run through fixed port `8514`, remove the setup secret after administrator creation, and restart the container once.
 
-## Final publication
+## 0.9 publication
 
-After human sign-off, change the package and manifest fallback from `1.0.0-rc.1` to `1.0.0`, move this checklist result into the release record, merge, and create signed tag `v1.0.0`. The release workflow must build the tag once, scan its immutable digest, attach evidence, and only then promote that same digest to `latest`.
+After the automated gates pass, merge the `0.9.0` release metadata and create tag `v0.9.0`. The release workflow must build the tag once, scan its immutable digest, attach evidence, and only then promote that same digest to `latest`. Before a future `v1.0.0`, complete and record every human exploratory item above, update the version metadata, and repeat the full release gate.

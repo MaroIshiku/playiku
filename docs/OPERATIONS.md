@@ -11,7 +11,7 @@ Stop Playiku before copying data. Back up the complete `/data` volume, including
 3. Stop the old container and start the new image against the existing volume.
 4. Confirm readiness, sign-in, saved sessions, and statistics.
 
-### Upgrade from 0.1.2 to 1.0
+### Upgrade from 0.1.2 to 0.9
 
 The SQLite schema stays at version 1, so the application performs no irreversible database migration. Theme settings receive backward-compatible defaults for the new gameplay preferences. Older saved game payloads are normalized when opened; normal Daily play never replaces the corresponding standard save. Keep the pre-upgrade backup until one saved game and the statistics page have been checked for every active account.
 
@@ -19,7 +19,7 @@ The SQLite schema stays at version 1, so the application performs no irreversibl
 
 Stop the new image. If its release notes declare no irreversible schema migration, restart the previous digest against the current volume. Otherwise restore the pre-upgrade volume backup before starting the previous digest. Never downgrade while a newer process is writing the database.
 
-For the 1.0 release candidate, stop the container and restart the recorded `v0.1.2` digest. Because schema version 1 is unchanged, restoring the backup is optional unless an operator wants to discard game activity created while testing 1.0.
+For the 0.9 release, stop the container and restart the recorded `v0.1.2` digest. Because schema version 1 is unchanged, restoring the backup is optional unless an operator wants to discard game activity created while running 0.9.
 
 ## First run
 

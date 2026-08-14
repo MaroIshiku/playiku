@@ -105,7 +105,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   app.get('/health/ready', async (_request, reply) => {
     try { sqlite.prepare('SELECT 1').get(); return { status: 'ready' }; } catch { return reply.code(503).send({ status: 'not-ready' }); }
   });
-  app.get('/api/manifest', async () => ({ id: 'playiku', name: 'Playiku', subtitle: 'Casual Games', version: process.env.APP_VERSION ?? '1.0.0-rc.1', buildDate: process.env.BUILD_DATE ?? 'development', gitSha: process.env.GIT_SHA ?? 'development', schemaVersion: 1, license: 'Apache-2.0', repository: 'https://github.com/MaroIshiku/playiku' }));
+  app.get('/api/manifest', async () => ({ id: 'playiku', name: 'Playiku', subtitle: 'Casual Games', version: process.env.APP_VERSION ?? '0.9.0', buildDate: process.env.BUILD_DATE ?? 'development', gitSha: process.env.GIT_SHA ?? 'development', schemaVersion: 1, license: 'Apache-2.0', repository: 'https://github.com/MaroIshiku/playiku' }));
 
   app.get('/api/setup', async () => ({ required: !db.select().from(accounts).limit(1).get() }));
   app.post('/api/setup', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (request, reply) => {
