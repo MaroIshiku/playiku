@@ -45,7 +45,7 @@ The binding local and CI gate is:
 node .ishiku/kit/scripts/verify-app . --full
 ```
 
-Requirements live in `appspec.yaml`; traceability is generated under `.ishiku/requirements/`. Release workflows build once, publish versioned GHCR images with SBOM and provenance, and never receive secrets from untrusted pull-request code.
+Requirements live in `appspec.yaml`; traceability is generated under `.ishiku/requirements/`. Release workflows build once, publish an immutable versioned GHCR image with SBOM and provenance, scan that exact digest, and then promote the same digest to `latest` for ZimaOS. Privileged release jobs never receive secrets from untrusted pull-request code.
 
 ## License
 
