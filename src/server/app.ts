@@ -14,7 +14,21 @@ import { accounts, openDatabase, sessions } from './database.js';
 const loginSchema = z.object({ username: z.string().trim().min(1).max(64), password: z.string().min(12).max(256) }).strict();
 const setupSchema = loginSchema.extend({ displayName: z.string().trim().min(1).max(80), setupSecret: z.string().min(32).max(1024) }).strict();
 const accountSchema = loginSchema.extend({ displayName: z.string().trim().min(1).max(80) }).strict();
-const settingsSchema = z.object({ theme: z.enum(['violet', 'ocean', 'forest', 'sunset', 'rose', 'mono']), mode: z.enum(['light', 'dark', 'system']), sound: z.boolean(), haptics: z.boolean(), animations: z.boolean(), reducedMotion: z.boolean(), autoResume: z.boolean() }).strict();
+const themeSchema = z.enum(['lavender', 'mint', 'sky', 'amber', 'rose', 'graphite']);
+const legacyThemeSchema = z.enum(['violet', 'ocean', 'forest', 'sunset', 'mono']);
+const normalizeTheme = (theme: z.infer<typeof themeSchema> | z.infer<typeof legacyThemeSchema>) => {
+  if (theme === 'violet') return 'lavender' as const;
+  if (theme === 'ocean') return 'sky' as const;
+  if (theme === 'forest') return 'mint' as const;
+  if (theme === 'sunset') return 'amber' as const;
+  if (theme === 'mono') return 'graphite' as const;
+  return theme;
+};
+const settingsSchema = z.object({ theme: z.union([themeSchema, legacyThemeSchema]).transform(normalizeTheme), mode: z.enum(['light', 'dark', 'system']), sound: z.boolean(), haptics: z.boolean(), animations: z.boolean(), reducedMotion: z.boolean(), autoResume: z.boolean() }).strict();
+const parseStoredSettings = (value?: string) => {
+  if (!value) return defaultSettings;
+  try { const parsed = settingsSchema.safeParse(JSON.parse(value)); return parsed.success ? parsed.data : defaultSettings; } catch { return defaultSettings; }
+};
 const gameIdSchema = z.enum(['sudoku', 'minesweeper', '2048', 'nonogram', 'snake', 'solitaire']);
 const stateSchema = z.object({ state: z.unknown(), completed: z.boolean().default(false) }).strict();
 const statisticsSchema = z.object({ gameId: gameIdSchema, outcome: z.enum(['started', 'won', 'lost']), durationMs: z.number().int().min(0).max(86_400_000).default(0), score: z.number().int().min(0).max(2_147_483_647).optional(), dailyDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).strict();
@@ -30,7 +44,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   const app = Fastify({ logger: options.logger === false ? false : { redact: ['req.headers.cookie', 'req.headers.authorization', 'body.password', 'body.setupSecret'] }, trustProxy: false, bodyLimit: MAX_STATE_BYTES + 4096 });
   const { sqlite, db } = openDatabase(options.databasePath);
   await app.register(cookie);
-  await app.register(helmet, { contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", 'data:'], connectSrc: ["'self'"], objectSrc: ["'none'"], baseUri: ["'none'"], frameAncestors: ["'none'"] } }, hsts: options.cookieSecure });
+  await app.register(helmet, { contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", 'data:'], connectSrc: ["'self'"], objectSrc: ["'none'"], baseUri: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: null } }, hsts: options.cookieSecure });
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
 
   const audit = (eventType: string, actorId: number | null, result: string, requestId: string) => sqlite.prepare('INSERT INTO audit_events (event_type, actor_id, result, request_id, occurred_at) VALUES (?, ?, ?, ?, ?)').run(eventType, actorId, result, requestId, Date.now());
@@ -169,7 +183,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
     const activeSessions = sqlite.prepare('SELECT game_id, state_json, updated_at FROM game_sessions WHERE account_id = ? ORDER BY updated_at DESC').all(auth.accountId) as { game_id: string; state_json: string; updated_at: number }[];
     const statistics = sqlite.prepare('SELECT * FROM game_statistics WHERE account_id = ? ORDER BY last_played_at DESC').all(auth.accountId);
     const achievements = (sqlite.prepare('SELECT achievement_id, unlocked_at FROM achievements WHERE account_id = ? ORDER BY unlocked_at').all(auth.accountId) as { achievement_id: string; unlocked_at: number }[]).map((row) => ({ id: row.achievement_id, unlockedAt: row.unlocked_at }));
-    return { settings: settingsRow?.value_json ? JSON.parse(settingsRow.value_json) : defaultSettings, favorites, activeSessions: activeSessions.map((row) => ({ gameId: row.game_id, state: JSON.parse(row.state_json), updatedAt: row.updated_at })), statistics, achievements };
+    return { settings: parseStoredSettings(settingsRow?.value_json), favorites, activeSessions: activeSessions.map((row) => ({ gameId: row.game_id, state: JSON.parse(row.state_json), updatedAt: row.updated_at })), statistics, achievements };
   });
 
   app.put('/api/settings', async (request, reply) => {
@@ -275,4 +289,4 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   return app;
 }
 
-export const defaultSettings = { theme: 'violet', mode: 'system', sound: true, haptics: true, animations: true, reducedMotion: false, autoResume: true } as const;
+export const defaultSettings = { theme: 'lavender', mode: 'system', sound: true, haptics: true, animations: true, reducedMotion: false, autoResume: true } as const;

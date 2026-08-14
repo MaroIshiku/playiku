@@ -2,6 +2,13 @@
 
 All notable changes follow semantic versioning.
 
+## 0.1.2 - 2026-08-14
+
+- Prevented HTTP appliance deployments from upgrading same-origin assets to unavailable HTTPS URLs, fixing the blank screen seen on local ZimaOS addresses.
+- Aligned the six themes and their light/dark color roles with ishiku Design System v5.
+- Added backward-compatible migration from the legacy theme identifiers so existing account preferences remain usable.
+- Added CSP and theme-migration regression coverage plus a versioned design-system provenance lock.
+
 ## 0.1.1 - 2026-08-14
 
 - Added the responsive Playiku library, six themes, light/dark modes, profile navigation, settings, statistics, milestones, About data, and PWA shell.

@@ -19,7 +19,9 @@ const setupAndLogin = async (app: Awaited<ReturnType<typeof buildApp>>, username
 describe('platform endpoints', () => {
   it('reports liveness, readiness, and build identity', async () => {
     const app = await create();
-    expect((await app.inject('/health/live')).statusCode).toBe(200);
+    const live = await app.inject('/health/live');
+    expect(live.statusCode).toBe(200);
+    expect(live.headers['content-security-policy']).not.toContain('upgrade-insecure-requests');
     expect((await app.inject('/health/ready')).statusCode).toBe(200);
     expect((await app.inject('/api/manifest')).json()).toMatchObject({ id: 'playiku', license: 'Apache-2.0', schemaVersion: 1 });
   }, 15_000);
@@ -45,10 +47,18 @@ describe('first run and sessions', () => {
     const invalid = await app.inject({ method: 'POST', url: '/api/session', payload: { username: 'admin', password: 'incorrect-password' } });
     expect(invalid.statusCode).toBe(401); expect(invalid.json().message).toBe('Invalid credentials.');
     expect((await app.inject('/api/state')).statusCode).toBe(401);
-    const settings = { theme: 'ocean', mode: 'dark', sound: false, haptics: false, animations: true, reducedMotion: false, autoResume: true };
+    const settings = { theme: 'sky', mode: 'dark', sound: false, haptics: false, animations: true, reducedMotion: false, autoResume: true };
     expect((await app.inject({ method: 'PUT', url: '/api/settings', headers: { cookie: auth.cookie }, payload: settings })).statusCode).toBe(403);
     expect((await app.inject({ method: 'PUT', url: '/api/settings', headers: { cookie: auth.cookie, 'x-csrf-token': auth.csrf }, payload: settings })).statusCode).toBe(200);
     expect((await app.inject({ method: 'GET', url: '/api/state', headers: { cookie: auth.cookie } })).json().settings).toMatchObject(settings);
+  });
+  it('migrates legacy theme preferences without losing other settings', async () => {
+    const app = await create('synthetic-setup-material-for-tests-2026'); const auth = await setupAndLogin(app);
+    const legacySettings = { theme: 'ocean', mode: 'dark', sound: false, haptics: true, animations: false, reducedMotion: true, autoResume: false };
+    const response = await app.inject({ method: 'PUT', url: '/api/settings', headers: { cookie: auth.cookie, 'x-csrf-token': auth.csrf }, payload: legacySettings });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ ...legacySettings, theme: 'sky' });
+    expect((await app.inject({ method: 'GET', url: '/api/state', headers: { cookie: auth.cookie } })).json().settings).toEqual({ ...legacySettings, theme: 'sky' });
   });
   it('validates game identifiers and isolates mutating state behind CSRF', async () => {
     const app = await create('synthetic-setup-material-for-tests-2026'); const auth = await setupAndLogin(app);
