@@ -14,6 +14,7 @@ import { accounts, openDatabase, sessions } from './database.js';
 const loginSchema = z.object({ username: z.string().trim().min(1).max(64), password: z.string().min(12).max(256) }).strict();
 const setupSchema = loginSchema.extend({ displayName: z.string().trim().min(1).max(80), setupSecret: z.string().min(32).max(1024) }).strict();
 const accountSchema = loginSchema.extend({ displayName: z.string().trim().min(1).max(80) }).strict();
+const profileSchema = z.object({ displayName: z.string().trim().min(1).max(80) }).strict();
 const themeSchema = z.enum(['lavender', 'mint', 'sky', 'amber', 'rose', 'graphite']);
 const legacyThemeSchema = z.enum(['violet', 'ocean', 'forest', 'sunset', 'mono']);
 const normalizeTheme = (theme: z.infer<typeof themeSchema> | z.infer<typeof legacyThemeSchema>) => {
@@ -24,21 +25,35 @@ const normalizeTheme = (theme: z.infer<typeof themeSchema> | z.infer<typeof lega
   if (theme === 'mono') return 'graphite' as const;
   return theme;
 };
-const settingsSchema = z.object({ theme: z.union([themeSchema, legacyThemeSchema]).transform(normalizeTheme), mode: z.enum(['light', 'dark', 'system']), sound: z.boolean(), haptics: z.boolean(), animations: z.boolean(), reducedMotion: z.boolean(), autoResume: z.boolean() }).strict();
+const defaultGameDefaults = { sudoku: 'Easy', minesweeper: 'Beginner', nonogram: 5, snake: 16, solitaireDraw: 1 } as const;
+const gameDefaultsSchema = z.object({ sudoku: z.enum(['Easy', 'Medium', 'Hard', 'Expert']), minesweeper: z.enum(['Beginner', 'Intermediate', 'Expert', 'Custom']), nonogram: z.union([z.literal(5), z.literal(10), z.literal(15)]), snake: z.union([z.literal(16), z.literal(22), z.literal(28)]), solitaireDraw: z.union([z.literal(1), z.literal(3)]) }).strict();
+const settingsSchema = z.object({ theme: z.union([themeSchema, legacyThemeSchema]).transform(normalizeTheme), mode: z.enum(['light', 'dark', 'system']), sound: z.boolean(), haptics: z.boolean(), animations: z.boolean(), reducedMotion: z.boolean(), autoResume: z.boolean(), showMistakes: z.boolean().default(true), confirmNewGames: z.boolean().default(true), defaults: gameDefaultsSchema.default(defaultGameDefaults) }).strict();
 const parseStoredSettings = (value?: string) => {
   if (!value) return defaultSettings;
   try { const parsed = settingsSchema.safeParse(JSON.parse(value)); return parsed.success ? parsed.data : defaultSettings; } catch { return defaultSettings; }
 };
 const gameIdSchema = z.enum(['sudoku', 'minesweeper', '2048', 'nonogram', 'snake', 'solitaire']);
 const stateSchema = z.object({ state: z.unknown(), completed: z.boolean().default(false) }).strict();
+const sudokuStateSchema = z.object({ difficulty: z.enum(['Easy', 'Medium', 'Hard', 'Expert']), puzzleSeed: z.number().int().min(0).max(0xffffffff), givens: z.array(z.number().int().min(0).max(9)).length(81), values: z.array(z.number().int().min(0).max(9)).length(81), notes: z.array(z.array(z.number().int().min(1).max(9)).max(9)).length(81), elapsed: z.number().int().min(0).max(86_400), completed: z.boolean() }).strict();
+const boardConfigSchema = z.object({ width: z.number().int().min(5).max(30), height: z.number().int().min(5).max(24), mines: z.number().int().min(1).max(719) }).strict().refine((config) => config.mines < config.width * config.height, 'Mine count must leave a safe cell.');
+const mineCellSchema = z.object({ mine: z.boolean(), open: z.boolean(), flagged: z.boolean() }).strict();
+const minesStateSchema = z.object({ difficulty: z.enum(['Beginner', 'Intermediate', 'Expert', 'Custom']), custom: boardConfigSchema, cells: z.array(mineCellSchema).min(25).max(720), seed: z.number().int().min(0).max(0xffffffff), seconds: z.number().int().min(0).max(86_400), started: z.boolean(), outcome: z.enum(['playing', 'won', 'lost']) }).strict().superRefine((state, context) => { const config = state.difficulty === 'Custom' ? state.custom : state.difficulty === 'Beginner' ? { width: 9, height: 9, mines: 10 } : state.difficulty === 'Intermediate' ? { width: 16, height: 16, mines: 40 } : { width: 30, height: 16, mines: 99 }; if (state.cells.length !== config.width * config.height) context.addIssue({ code: 'custom', message: 'Board dimensions do not match the cell data.' }); if (state.started && state.cells.filter((cell) => cell.mine).length !== config.mines) context.addIssue({ code: 'custom', message: 'Board mine count is invalid.' }); });
+const board2048Schema = z.array(z.number().int().min(0).max(1_073_741_824).refine((value) => value === 0 || (value & (value - 1)) === 0, 'Tiles must be powers of two.')).length(16);
+const game2048StateSchema = z.object({ board: board2048Schema, score: z.number().int().min(0).max(2_147_483_647), best: z.number().int().min(0).max(2_147_483_647), rngState: z.number().int().min(0).max(0xffffffff), reached2048: z.boolean(), gameOver: z.boolean() }).strict();
+const nonogramStateSchema = z.object({ size: z.union([z.literal(5), z.literal(10), z.literal(15)]), puzzleSeed: z.number().int().min(0).max(0xffffffff), generatorVersion: z.union([z.literal(1), z.literal(2)]), marks: z.array(z.number().int().min(0).max(2)).min(25).max(225), elapsed: z.number().int().min(0).max(86_400), completed: z.boolean() }).strict().refine((state) => state.marks.length === state.size * state.size, 'Puzzle size does not match the marks.');
+const snakeStateSchema = z.object({ size: z.union([z.literal(16), z.literal(22), z.literal(28)]), body: z.array(z.number().int().min(0).max(783)).min(1).max(784), food: z.number().int().min(-1).max(783), score: z.number().int().min(0).max(7840) }).strict().refine((state) => state.body.every((item) => item < state.size * state.size) && state.food < state.size * state.size, 'Snake state is outside the board.');
+const cardSchema = z.object({ id: z.string().min(2).max(4), suit: z.enum(['♠', '♥', '♦', '♣']), rank: z.number().int().min(1).max(13), faceUp: z.boolean() }).strict();
+const solitaireStateSchema = z.object({ stock: z.array(cardSchema).max(52), waste: z.array(cardSchema).max(52), foundations: z.array(z.array(cardSchema).max(13)).length(4), tableau: z.array(z.array(cardSchema).max(52)).length(7), draw: z.union([z.literal(1), z.literal(3)]), moves: z.number().int().min(0).max(100_000), elapsed: z.number().int().min(0).max(86_400), completed: z.boolean() }).strict().superRefine((state, context) => { const cards = [...state.stock, ...state.waste, ...state.foundations.flat(), ...state.tableau.flat()]; if (cards.length !== 52 || new Set(cards.map((card) => card.id)).size !== 52) context.addIssue({ code: 'custom', message: 'Solitaire state must contain one complete deck.' }); });
+const gameStateSchemas = { sudoku: sudokuStateSchema, minesweeper: minesStateSchema, '2048': game2048StateSchema, nonogram: nonogramStateSchema, snake: snakeStateSchema, solitaire: solitaireStateSchema } as const;
 const statisticsSchema = z.object({ gameId: gameIdSchema, outcome: z.enum(['started', 'won', 'lost']), durationMs: z.number().int().min(0).max(86_400_000).default(0), score: z.number().int().min(0).max(2_147_483_647).optional(), dailyDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).strict();
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const safeEqual = (left: string, right: string) => timingSafeEqual(createHash('sha256').update(left).digest(), createHash('sha256').update(right).digest());
 const MAX_STATE_BYTES = 64 * 1024;
 const IDLE_MS = 30 * 60 * 1000;
 const ABSOLUTE_MS = 7 * 24 * 60 * 60 * 1000;
+const RECENT_AUTH_MS = 10 * 60 * 1000;
 
-type Auth = { accountId: number; username: string; displayName: string; role: 'admin' | 'user'; csrf: string; tokenHash: string };
+type Auth = { accountId: number; username: string; displayName: string; role: 'admin' | 'user'; csrf: string; tokenHash: string; authenticatedAt: number };
 
 export async function buildApp(options: { databasePath: string; cookieSecure: boolean; setupSecret?: string; timezone?: string; serveFrontend?: boolean; logger?: boolean }) {
   const app = Fastify({ logger: options.logger === false ? false : { redact: ['req.headers.cookie', 'req.headers.authorization', 'body.password', 'body.setupSecret'] }, trustProxy: false, bodyLimit: MAX_STATE_BYTES + 4096 });
@@ -50,13 +65,17 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   const audit = (eventType: string, actorId: number | null, result: string, requestId: string) => sqlite.prepare('INSERT INTO audit_events (event_type, actor_id, result, request_id, occurred_at) VALUES (?, ?, ?, ?, ?)').run(eventType, actorId, result, requestId, Date.now());
   const error = (reply: FastifyReply, request: FastifyRequest, status: number, code: string, message: string) => reply.code(status).send({ code, message, requestId: request.id });
   const sessionCookie = options.cookieSecure ? '__Host-ishiku_session' : 'ishiku_session';
+  const challengeDate = () => {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: options.timezone ?? 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    return `${parts.find((part) => part.type === 'year')?.value}-${parts.find((part) => part.type === 'month')?.value}-${parts.find((part) => part.type === 'day')?.value}`;
+  };
   const transaction = <T,>(operation: () => T): T => {
     sqlite.exec('BEGIN IMMEDIATE');
     try { const result = operation(); sqlite.exec('COMMIT'); return result; }
     catch (cause) { sqlite.exec('ROLLBACK'); throw cause; }
   };
 
-  const authenticate = async (request: FastifyRequest, reply: FastifyReply, requireCsrf = false): Promise<Auth | undefined> => {
+  const authenticate = async (request: FastifyRequest, reply: FastifyReply, requireCsrf = false, requireRecent = false): Promise<Auth | undefined> => {
     const token = request.cookies[sessionCookie];
     const now = Date.now();
     const session = token ? db.select().from(sessions).where(eq(sessions.tokenHash, hashToken(token))).get() : undefined;
@@ -69,20 +88,24 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
       error(reply, request, 403, 'AUTH_FORBIDDEN', 'Request denied.');
       return;
     }
+    if (requireRecent && now - session.createdAt > RECENT_AUTH_MS) {
+      error(reply, request, 403, 'REAUTH_REQUIRED', 'Recent authentication required.');
+      return;
+    }
     const account = db.select().from(accounts).where(eq(accounts.id, session.accountId)).get();
     if (!account) {
       error(reply, request, 401, 'AUTH_REQUIRED', 'Authentication required.');
       return;
     }
     db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.tokenHash, session.tokenHash)).run();
-    return { accountId: account.id, username: account.username, displayName: account.displayName, role: account.role === 'admin' ? 'admin' : 'user', csrf: session.csrf, tokenHash: session.tokenHash };
+    return { accountId: account.id, username: account.username, displayName: account.displayName, role: account.role === 'admin' ? 'admin' : 'user', csrf: session.csrf, tokenHash: session.tokenHash, authenticatedAt: session.createdAt };
   };
 
   app.get('/health/live', async () => ({ status: 'ok' }));
   app.get('/health/ready', async (_request, reply) => {
     try { sqlite.prepare('SELECT 1').get(); return { status: 'ready' }; } catch { return reply.code(503).send({ status: 'not-ready' }); }
   });
-  app.get('/api/manifest', async () => ({ id: 'playiku', name: 'Playiku', subtitle: 'Casual Games', version: process.env.APP_VERSION ?? '0.1.0', buildDate: process.env.BUILD_DATE ?? 'development', gitSha: process.env.GIT_SHA ?? 'development', schemaVersion: 1, license: 'Apache-2.0', repository: 'https://github.com/MaroIshiku/playiku' }));
+  app.get('/api/manifest', async () => ({ id: 'playiku', name: 'Playiku', subtitle: 'Casual Games', version: process.env.APP_VERSION ?? '1.0.0-rc.1', buildDate: process.env.BUILD_DATE ?? 'development', gitSha: process.env.GIT_SHA ?? 'development', schemaVersion: 1, license: 'Apache-2.0', repository: 'https://github.com/MaroIshiku/playiku' }));
 
   app.get('/api/setup', async () => ({ required: !db.select().from(accounts).limit(1).get() }));
   app.post('/api/setup', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (request, reply) => {
@@ -137,6 +160,47 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
     return reply.code(204).send();
   });
 
+  app.post('/api/session/reauthenticate', { config: { rateLimit: { max: 5, timeWindow: '5 minutes' } } }, async (request, reply) => {
+    const auth = await authenticate(request, reply, true);
+    if (!auth) return;
+    const input = z.object({ password: z.string().min(12).max(256) }).strict().safeParse(request.body);
+    const account = db.select().from(accounts).where(eq(accounts.id, auth.accountId)).get();
+    const valid = input.success && account ? await argon2.verify(account.passwordHash, input.data.password) : false;
+    if (!valid) { audit('reauthentication', auth.accountId, 'failed', request.id); return error(reply, request, 401, 'AUTH_INVALID', 'Invalid credentials.'); }
+    db.update(sessions).set({ createdAt: Date.now() }).where(eq(sessions.tokenHash, auth.tokenHash)).run();
+    audit('reauthentication', auth.accountId, 'success', request.id);
+    return { reauthenticated: true };
+  });
+
+  app.get('/api/sessions', async (request, reply) => {
+    const auth = await authenticate(request, reply);
+    if (!auth) return;
+    return (sqlite.prepare('SELECT token_hash, created_at, last_seen_at, expires_at FROM sessions WHERE account_id = ? ORDER BY last_seen_at DESC').all(auth.accountId) as { token_hash: string; created_at: number; last_seen_at: number; expires_at: number }[]).map((session) => ({ id: createHash('sha256').update(session.token_hash).digest('hex').slice(0, 32), current: session.token_hash === auth.tokenHash, createdAt: session.created_at, lastSeenAt: session.last_seen_at, expiresAt: session.expires_at }));
+  });
+
+  app.delete('/api/sessions/:sessionId', async (request, reply) => {
+    const auth = await authenticate(request, reply, true, true);
+    if (!auth) return;
+    const sessionId = z.string().regex(/^[a-f0-9]{32}$/).safeParse((request.params as { sessionId?: string }).sessionId);
+    if (!sessionId.success) return error(reply, request, 400, 'VALIDATION_ERROR', 'Session identifier is invalid.');
+    const target = (sqlite.prepare('SELECT token_hash FROM sessions WHERE account_id = ?').all(auth.accountId) as { token_hash: string }[]).find((session) => createHash('sha256').update(session.token_hash).digest('hex').slice(0, 32) === sessionId.data);
+    if (!target) return error(reply, request, 404, 'NOT_FOUND', 'Session not found.');
+    db.delete(sessions).where(and(eq(sessions.tokenHash, target.token_hash), eq(sessions.accountId, auth.accountId))).run();
+    if (target.token_hash === auth.tokenHash) reply.clearCookie(sessionCookie, { path: '/', secure: options.cookieSecure, sameSite: 'strict' });
+    audit('session_revoked', auth.accountId, 'success', request.id);
+    return reply.code(204).send();
+  });
+
+  app.patch('/api/profile', async (request, reply) => {
+    const auth = await authenticate(request, reply, true);
+    if (!auth) return;
+    const input = profileSchema.safeParse(request.body);
+    if (!input.success) return error(reply, request, 400, 'VALIDATION_ERROR', 'Profile details are invalid.');
+    db.update(accounts).set({ displayName: input.data.displayName }).where(eq(accounts.id, auth.accountId)).run();
+    audit('profile_updated', auth.accountId, 'success', request.id);
+    return { username: auth.username, displayName: input.data.displayName, role: auth.role };
+  });
+
   app.get('/api/accounts', async (request, reply) => {
     const auth = await authenticate(request, reply);
     if (!auth) return;
@@ -162,7 +226,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   });
 
   app.delete('/api/accounts/:accountId', async (request, reply) => {
-    const auth = await authenticate(request, reply, true);
+    const auth = await authenticate(request, reply, true, true);
     if (!auth) return;
     if (auth.role !== 'admin') return error(reply, request, 403, 'AUTH_FORBIDDEN', 'Request denied.');
     const accountId = z.coerce.number().int().positive().safeParse((request.params as { accountId?: string }).accountId);
@@ -211,7 +275,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
     if (!auth) return;
     const gameId = gameIdSchema.safeParse((request.params as { gameId?: string }).gameId);
     const input = stateSchema.safeParse(request.body);
-    if (!gameId.success || !input.success || Buffer.byteLength(JSON.stringify(input.data.state)) > MAX_STATE_BYTES) return error(reply, request, 400, 'VALIDATION_ERROR', 'Game state is invalid or too large.');
+    if (!gameId.success || !input.success || Buffer.byteLength(JSON.stringify(input.data.state)) > MAX_STATE_BYTES || (!input.data.completed && !gameStateSchemas[gameId.data].safeParse(input.data.state).success)) return error(reply, request, 400, 'VALIDATION_ERROR', 'Game state is invalid or too large.');
     if (input.data.completed) sqlite.prepare('DELETE FROM game_sessions WHERE account_id = ? AND game_id = ?').run(auth.accountId, gameId.data);
     else sqlite.prepare('INSERT INTO game_sessions (account_id, game_id, state_json, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(account_id, game_id) DO UPDATE SET state_json = excluded.state_json, updated_at = excluded.updated_at').run(auth.accountId, gameId.data, JSON.stringify(input.data.state), Date.now());
     return { saved: !input.data.completed };
@@ -222,6 +286,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
     if (!auth) return;
     const input = statisticsSchema.safeParse(request.body);
     if (!input.success) return error(reply, request, 400, 'VALIDATION_ERROR', 'Statistic is invalid.');
+    if (input.data.dailyDate && (input.data.dailyDate !== challengeDate() || !['sudoku', 'minesweeper', '2048', 'nonogram'].includes(input.data.gameId))) return error(reply, request, 400, 'VALIDATION_ERROR', 'Daily challenge result is invalid.');
     const won = input.data.outcome === 'won' ? 1 : 0;
     const played = input.data.outcome === 'started' ? 1 : 0;
     sqlite.prepare(`INSERT INTO game_statistics (account_id, game_id, games_played, games_won, total_play_ms, best_score, best_time_ms, current_streak, longest_streak, last_played_at)
@@ -245,7 +310,7 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   });
 
   app.delete('/api/history', async (request, reply) => {
-    const auth = await authenticate(request, reply, true);
+    const auth = await authenticate(request, reply, true, true);
     if (!auth) return;
     const input = z.object({ type: z.enum(['sessions', 'statistics', 'all']) }).strict().safeParse(request.body);
     if (!input.success) return error(reply, request, 400, 'VALIDATION_ERROR', 'Deletion request is invalid.');
@@ -267,9 +332,9 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
     if (!auth) return;
     const gameId = gameIdSchema.safeParse((request.params as { gameId?: string }).gameId);
     if (!gameId.success || !['sudoku', 'minesweeper', '2048', 'nonogram'].includes(gameId.data)) return error(reply, request, 404, 'NOT_FOUND', 'Daily challenge is unavailable.');
-    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: options.timezone ?? 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-    const date = `${parts.find((part) => part.type === 'year')?.value}-${parts.find((part) => part.type === 'month')?.value}-${parts.find((part) => part.type === 'day')?.value}`;
-    return { gameId: gameId.data, date, seed: createHash('sha256').update(`playiku:v1:${gameId.data}:${date}`).digest('hex').slice(0, 16) };
+    const date = challengeDate();
+    const completed = Boolean(sqlite.prepare('SELECT 1 FROM daily_results WHERE account_id = ? AND game_id = ? AND challenge_date = ?').get(auth.accountId, gameId.data, date));
+    return { gameId: gameId.data, date, seed: createHash('sha256').update(`playiku:v2:${gameId.data}:${date}`).digest('hex').slice(0, 16), completed };
   });
 
   app.setErrorHandler((cause, request, reply) => {
@@ -289,4 +354,4 @@ export async function buildApp(options: { databasePath: string; cookieSecure: bo
   return app;
 }
 
-export const defaultSettings = { theme: 'lavender', mode: 'system', sound: true, haptics: true, animations: true, reducedMotion: false, autoResume: true } as const;
+export const defaultSettings = { theme: 'lavender', mode: 'system', sound: true, haptics: true, animations: true, reducedMotion: false, autoResume: true, showMistakes: true, confirmNewGames: true, defaults: defaultGameDefaults } as const;

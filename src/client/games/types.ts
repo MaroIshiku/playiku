@@ -4,8 +4,17 @@ export type GameProps = {
   initialState?: unknown;
   dailySeed?: string;
   reducedMotion: boolean;
+  bestScore?: number;
+  preferences: {
+    showMistakes: boolean;
+    sudokuDifficulty: 'Easy' | 'Medium' | 'Hard' | 'Expert';
+    minesweeperDifficulty: 'Beginner' | 'Intermediate' | 'Expert' | 'Custom';
+    nonogramSize: 5 | 10 | 15;
+    snakeSize: 16 | 22 | 28;
+    solitaireDraw: 1 | 3;
+  };
   onState: (state: unknown) => void;
-  onComplete: (details?: { score?: number; durationMs?: number }) => void;
+  onFinish: (details: { outcome: 'won' | 'lost'; score?: number; durationMs?: number }) => void;
 };
 
 export type GameManifest = {
@@ -17,5 +26,6 @@ export type GameManifest = {
   supportsResume: boolean;
   supportsDailyChallenge: boolean;
   controls: string;
+  tips: string[];
   component: ComponentType<GameProps>;
 };

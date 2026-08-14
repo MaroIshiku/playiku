@@ -8,6 +8,9 @@ services:
     read_only: true
     cap_drop:
       - ALL
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: "1.0"
     security_opt:
       - no-new-privileges:true
     ports:
@@ -68,7 +71,7 @@ x-casaos:
     en_us: Self-hosted casual browser games
   description:
     en_us: A private collection of six polished casual games with per-user progress and statistics.
-  icon: https://cdn.jsdelivr.net/gh/MaroIshiku/playiku@main/public/playiku-icon.png
+  icon: https://cdn.jsdelivr.net/gh/MaroIshiku/playiku@b02c0fe99dafa53bbae6a8f1296c7910b0c783ff/public/playiku-icon.png
   index: /
   port_map: "8514"
   repo: https://github.com/MaroIshiku/playiku
