@@ -14,18 +14,48 @@
   "implementation": [
     {
       "path": "src/client/styles.css",
-      "sha256": "628fe914173c9e8a98fa679cf12bb7c477289cd9e36edb8dbfc5732fe6ae7dc3",
+      "sha256": "47fdfaa0802f52f69ad0103cc01320d0d4ac947b16a179c242d94fc35d2b76bf",
       "roles": ["tokens", "components"]
     },
     {
       "path": "src/client/main.tsx",
-      "sha256": "13ebc3286467c45570f88baba273e34fd461cfba95a434d91513f0d4dd270748",
+      "sha256": "336ccb79aae9b88bc314151c0088362cf8b0c7cdba92a5dcd28e93ae880674c8",
       "roles": ["components", "theme-controller"]
     },
     {
       "path": "public/playiku-icon.png",
       "sha256": "e1e51ea4f8cdce3bdad72e5375b47564f46d94718110bfba24ce9a687e3ce703",
       "roles": ["icons"]
+    },
+    {
+      "path": "src/client/games/2048.tsx",
+      "sha256": "98473bccdf39fda597a3eccec3c395d5ba2667894246262edce0a7663f90f6d0",
+      "roles": ["components", "icons"]
+    },
+    {
+      "path": "src/client/games/minesweeper.tsx",
+      "sha256": "6183192ee50320805b29cbbfb94342b34c1fb6a40632852fe8a78d5e8d71b5d8",
+      "roles": ["components", "icons"]
+    },
+    {
+      "path": "src/client/games/nonogram.tsx",
+      "sha256": "05a42e32bc8a05200ce5d6cbcb1a0673e13840f7350e402ccdf6e66e9d2bbc5e",
+      "roles": ["components", "icons"]
+    },
+    {
+      "path": "src/client/games/snake.tsx",
+      "sha256": "8ea9bd7f513ab2e7a8e1ea2b0c2fd2d484192f0ea52371d54c252e4c05405d4e",
+      "roles": ["components", "icons"]
+    },
+    {
+      "path": "src/client/games/solitaire.tsx",
+      "sha256": "8e9a120f2d2e58992a55775f2e24b7d9c75f35ca3c98be36520b6c21fc7d6c5d",
+      "roles": ["components", "icons"]
+    },
+    {
+      "path": "src/client/games/sudoku.tsx",
+      "sha256": "457a582914c0be4e9b6425777a79d4a7454f323b32727e10525bf7e4c04c0f3e",
+      "roles": ["components", "icons"]
     }
   ]
 }

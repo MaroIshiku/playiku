@@ -11,13 +11,13 @@
     {
       "id": "AUTH-001",
       "implementation": ["src/server/app.ts", "src/server/database.ts", "src/server/config.ts"],
-      "tests": { "unit": [], "integration": ["tests/app.test.ts: first run and sessions"], "e2e": ["e2e/playiku.e2e.ts: real first-run flow"], "security": ["tests/app.test.ts: generic authentication failures and CSRF"] },
+      "tests": { "unit": [], "integration": ["tests/app.test.ts: first run, profile updates, session listing and revocation"], "e2e": ["e2e/playiku.e2e.ts: real first-run and Sessions flows"], "security": ["tests/app.test.ts: generic authentication failures, account isolation, and CSRF"] },
       "status": "verified"
     },
     {
       "id": "SHELL-001",
       "implementation": ["src/client/main.tsx", "src/client/styles.css"],
-      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: library and five responsive viewports", "embedded browser: HTTP setup and authenticated shell"] , "security": [] },
+      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: library, profile menu, settings, sessions, dialogs, and five responsive viewports", "embedded browser: release-candidate shell exploration"] , "security": [] },
       "status": "verified"
     },
     {
@@ -29,7 +29,7 @@
     {
       "id": "GAME-001",
       "implementation": ["src/client/games/types.ts", "src/client/games/registry.ts"],
-      "tests": { "unit": ["tests/game-logic.test.ts"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: registry-driven library"], "security": [] },
+      "tests": { "unit": ["tests/game-logic.test.ts"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: registry-driven library and accessible manifest tips for every game"], "security": [] },
       "status": "verified"
     },
     {
@@ -41,19 +41,19 @@
     {
       "id": "MINE-001",
       "implementation": ["src/client/games/minesweeper.tsx"],
-      "tests": { "unit": ["tests/game-logic.test.ts: safe first cell, mine count, reveal behavior"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: board, bounded custom board, daily mode, Chromium/Firefox/mobile, Axe"], "security": [] },
+      "tests": { "unit": ["tests/game-logic.test.ts: safe first area, exact dense-board mine count, reveal behavior"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: safe first click, bounded custom board, daily mode, Chromium/Firefox/mobile, Axe"], "security": [] },
       "status": "verified"
     },
     {
       "id": "G2048-001",
       "implementation": ["src/client/games/2048.tsx"],
-      "tests": { "unit": ["tests/game-logic.test.ts: canonical merge and score"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: keyboard move, daily mode, Chromium/Firefox/mobile, Axe"], "security": [] },
+      "tests": { "unit": ["tests/game-logic.test.ts: canonical merge, score, deterministic spawn, game-over detection"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: keyboard move, daily isolation from normal save, Chromium/Firefox/mobile, Axe"], "security": [] },
       "status": "verified"
     },
     {
       "id": "NONO-001",
       "implementation": ["src/client/games/nonogram.tsx"],
-      "tests": { "unit": ["tests/game-logic.test.ts: line clues"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: board, daily mode, Chromium/Firefox/mobile, Axe"], "security": [] },
+      "tests": { "unit": ["tests/game-logic.test.ts: clues and deterministic varied pictures for every size"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: drag paint, undo, hint, daily mode, Chromium/Firefox/mobile, Axe"], "security": [] },
       "status": "verified"
     },
     {
@@ -65,25 +65,25 @@
     {
       "id": "SOL-001",
       "implementation": ["src/client/games/solitaire.tsx"],
-      "tests": { "unit": ["tests/game-logic.test.ts: deal and legal moves"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: board on Chromium/Firefox/mobile and Axe"], "security": [] },
+      "tests": { "unit": ["tests/game-logic.test.ts: 24-card stock, correct exposed tableau tops, legal runs, foundations, win"], "integration": [], "e2e": ["e2e/playiku.e2e.ts: correct deal presentation on Chromium/Firefox/mobile and Axe"], "security": [] },
       "status": "verified"
     },
     {
       "id": "DATA-001",
       "implementation": ["src/server/database.ts", "src/server/app.ts", "src/client/api.ts"],
-      "tests": { "unit": [], "integration": ["tests/app.test.ts: validation, persistence, deletion, achievements, multiple accounts"], "e2e": ["e2e/playiku.e2e.ts: administrator account management"], "security": ["tests/app.test.ts: account isolation, authorization, session revocation"] },
+      "tests": { "unit": [], "integration": ["tests/app.test.ts: strict per-game state validation, persistence, deletion, achievements, multiple accounts"], "e2e": ["e2e/playiku.e2e.ts: administrator account management"], "security": ["tests/app.test.ts: malformed state rejection, account isolation, authorization, opaque session revocation"] },
       "status": "verified"
     },
     {
       "id": "DAILY-001",
       "implementation": ["src/server/app.ts: /api/daily and daily_results"],
-      "tests": { "unit": [], "integration": ["tests/app.test.ts: deterministic authenticated daily challenges"], "e2e": ["e2e/playiku.e2e.ts: four daily game modes"], "security": [] },
+      "tests": { "unit": ["tests/game-logic.test.ts: varied deterministic puzzle and random-sequence seeds"], "integration": ["tests/app.test.ts: deterministic Daily status, completion, and forged-date rejection"], "e2e": ["e2e/playiku.e2e.ts: four Daily modes and normal-save isolation"], "security": [] },
       "status": "verified"
     },
     {
       "id": "A11Y-001",
       "implementation": ["src/client/main.tsx", "src/client/styles.css", "src/client/games"],
-      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: Axe home and every game, 60 responsive theme screenshots, Chromium/Firefox/mobile", "embedded browser: zero horizontal overflow and empty console"] , "security": [] },
+      "tests": { "unit": [], "integration": [], "e2e": ["e2e/playiku.e2e.ts: Axe home, every game, help and confirmation dialogs; 60 theme screenshots plus phone/desktop game captures; Chromium/Firefox/mobile", "embedded browser: release-candidate responsive and console exploration"] , "security": [] },
       "status": "verified"
     },
     {
@@ -101,7 +101,7 @@
     {
       "id": "DEPLOY-001",
       "implementation": ["Dockerfile", "compose.yaml", "scripts/verify-container.ps1", "docs/OPERATIONS.md"],
-      "tests": { "unit": [], "integration": ["scripts/verify-container.ps1: persistence and backup/restore"], "e2e": [], "security": ["docker build --check", "Docker Scout CVE scan", ".ishiku/reports/playiku-sbom.spdx.json"] },
+      "tests": { "unit": [], "integration": ["scripts/verify-container.ps1: hardening, persistence and backup/restore"], "e2e": [], "security": ["docker build --check", "exact-digest Trivy high/critical scan", "SPDX SBOM and provenance"] },
       "status": "verified"
     }
   ]

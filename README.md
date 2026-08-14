@@ -5,6 +5,7 @@ Playiku is a self-hosted collection of polished casual browser games. Version 1 
 ## Highlights
 
 - Six isolated game modules registered through one manifest contract.
+- In-app tips, safe replacement confirmations, Daily challenges that preserve normal saves, and focused completion feedback.
 - Touch, mouse, and keyboard controls with reduced-motion support.
 - Six themes in light and dark mode.
 - Private per-user favorites, settings, saved games, statistics, daily results, and milestones.
@@ -46,6 +47,8 @@ node .ishiku/kit/scripts/verify-app . --full
 ```
 
 Requirements live in `appspec.yaml`; traceability is generated under `.ishiku/requirements/`. Release workflows build once, publish an immutable versioned GHCR image with SBOM and provenance, scan that exact digest, and then promote the same digest to `latest` for ZimaOS. Privileged release jobs never receive secrets from untrusted pull-request code.
+
+Version `1.0.0-rc.1` is the full-release candidate. The remaining manual approval steps are listed in `docs/RELEASE_CHECKLIST.md`; prerelease tags are deliberately never promoted to `latest`.
 
 ## License
 

@@ -1,10 +1,12 @@
 export type ThemeName = 'lavender' | 'mint' | 'sky' | 'amber' | 'rose' | 'graphite';
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type Settings = { theme: ThemeName; mode: ThemeMode; sound: boolean; haptics: boolean; animations: boolean; reducedMotion: boolean; autoResume: boolean };
+export type GameDefaults = { sudoku: 'Easy' | 'Medium' | 'Hard' | 'Expert'; minesweeper: 'Beginner' | 'Intermediate' | 'Expert' | 'Custom'; nonogram: 5 | 10 | 15; snake: 16 | 22 | 28; solitaireDraw: 1 | 3 };
+export type Settings = { theme: ThemeName; mode: ThemeMode; sound: boolean; haptics: boolean; animations: boolean; reducedMotion: boolean; autoResume: boolean; showMistakes: boolean; confirmNewGames: boolean; defaults: GameDefaults };
 export type Statistic = { game_id: string; games_played: number; games_won: number; total_play_ms: number; best_score: number | null; best_time_ms: number | null; current_streak: number; longest_streak: number; last_played_at: number | null };
 export type AppState = { settings: Settings; favorites: string[]; activeSessions: { gameId: string; state: unknown; updatedAt: number }[]; statistics: Statistic[]; achievements: { id: string; unlockedAt: number }[] };
 export type User = { username: string; displayName: string; role: 'admin' | 'user' };
 export type Account = User & { id: number; createdAt: number };
+export type SessionInfo = { id: string; current: boolean; createdAt: number; lastSeenAt: number; expiresAt: number };
 
 let csrf = '';
 const storage = { user: 'playiku:offline-user', state: 'playiku:offline-state', csrf: 'playiku:offline-csrf', queue: 'playiku:offline-queue' } as const;
@@ -53,14 +55,18 @@ export const api = {
   setup: (input: { username: string; displayName: string; password: string; setupSecret: string }) => request('/api/setup', { method: 'POST', body: JSON.stringify(input) }),
   session: async () => { try { const result = await request<{ csrf: string; user: User }>('/api/session'); csrf = result.csrf; write(storage.csrf, csrf); write(storage.user, result.user); return result; } catch (cause) { const user = read<User>(storage.user); const proof = read<string>(storage.csrf); if (user && proof) { csrf = proof; return { csrf, user }; } throw cause; } },
   login: async (input: { username: string; password: string }) => { const result = await request<{ csrf: string; user: User }>('/api/session', { method: 'POST', body: JSON.stringify(input) }); csrf = result.csrf; write(storage.csrf, csrf); write(storage.user, result.user); return result; },
-  logout: async () => { const result = await request('/api/session', { method: 'DELETE' }); Object.values(storage).forEach((key) => localStorage.removeItem(key)); return result; },
+  logout: async () => { try { return await request('/api/session', { method: 'DELETE' }); } finally { csrf = ''; Object.values(storage).forEach((key) => localStorage.removeItem(key)); } },
   state: async () => { try { const result = await request<AppState>('/api/state'); write(storage.state, result); return result; } catch (cause) { const cached = read<AppState>(storage.state); if (cached) return cached; throw cause; } },
   saveSettings: (settings: Settings) => mutation<Settings>('/api/settings', { method: 'PUT', body: JSON.stringify(settings) }, settings),
   favorite: (gameId: string, favorite: boolean) => mutation(`/api/favorites/${gameId}`, { method: 'PUT', body: JSON.stringify({ favorite }) }, { gameId, favorite }),
   saveGame: (gameId: string, state: unknown, completed = false) => mutation(`/api/games/${gameId}/session`, { method: 'PUT', body: JSON.stringify({ state, completed }) }, { saved: !completed }),
   statistic: (input: { gameId: string; outcome: 'started' | 'won' | 'lost'; durationMs?: number; score?: number; dailyDate?: string }) => mutation('/api/statistics', { method: 'POST', body: JSON.stringify({ durationMs: 0, ...input }) }, { recorded: true }),
   clearHistory: (type: 'sessions' | 'statistics' | 'all') => mutation('/api/history', { method: 'DELETE', body: JSON.stringify({ type }) }),
-  daily: (gameId: string) => request<{ gameId: string; date: string; seed: string }>(`/api/daily/${gameId}`),
+  daily: (gameId: string) => request<{ gameId: string; date: string; seed: string; completed: boolean }>(`/api/daily/${gameId}`),
+  sessions: () => request<SessionInfo[]>('/api/sessions'),
+  revokeSession: (id: string) => request(`/api/sessions/${id}`, { method: 'DELETE' }),
+  reauthenticate: (password: string) => request<{ reauthenticated: boolean }>('/api/session/reauthenticate', { method: 'POST', body: JSON.stringify({ password }) }),
+  updateProfile: (displayName: string) => request<User>('/api/profile', { method: 'PATCH', body: JSON.stringify({ displayName }) }),
   accounts: () => request<Account[]>('/api/accounts'),
   createAccount: (input: { username: string; displayName: string; password: string }) => request<Account>('/api/accounts', { method: 'POST', body: JSON.stringify(input) }),
   deleteAccount: (id: number) => request(`/api/accounts/${id}`, { method: 'DELETE' }),

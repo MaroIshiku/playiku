@@ -2,6 +2,23 @@
 
 All notable changes follow semantic versioning.
 
+## 1.0.0-rc.1 - 2026-08-14
+
+- Completed the version 1 game contract with shared How to play guidance, accessible confirmations, round feedback, configurable default games, editable profiles, and revocable session management.
+- Reworked Daily challenges so the date seed drives complete puzzles and random sequences, completed challenges are not repeatedly offered, and Daily play cannot overwrite a normal saved game.
+- Added varied uniquely solvable Sudoku transformations, safe-area and exact-count Minesweeper generation, deterministic Nonogram pictures, deterministic 2048 spawning and game-over handling, safer Snake turn queuing, and a corrected Klondike deal with redo and foundation-to-tableau moves.
+- Added reduced-motion-aware tile, win, food, and incorrect-move animation plus responsive game-header, dialog, empty, loading, error, and completion states aligned with ishiku Design System v5.
+- Added strict per-game persistence schemas, bounded payload validation, Daily result validation, stable opaque session identifiers, build identity metadata, and immutable release-note generation.
+- Expanded deterministic engine, API, security, Axe, keyboard, touch/drag, offline, responsive, dialog, Daily-isolation, and visual evidence from 20 to 26 unit/integration tests plus the three-browser Playwright matrix.
+
+### Compatibility and migration
+
+The SQLite schema remains at version 1 and no irreversible database migration is performed. Existing accounts, settings, statistics, favorites, achievements, and sessions remain compatible. Legacy theme preferences and the previous Sudoku, Nonogram, Minesweeper, 2048, and Solitaire save shapes are migrated or normalized client-side when resumed. Back up `/data` before upgrading; rollback to `v0.1.2` is safe against the unchanged schema after stopping the newer container.
+
+### Release-candidate status
+
+Automated verification is required to pass before merge. Final `v1.0.0` publication remains gated on the short human exploratory and visual-approval checklist in `docs/RELEASE_CHECKLIST.md`; this release candidate must not be promoted to `latest`.
+
 ## 0.1.2 - 2026-08-14
 
 - Prevented HTTP appliance deployments from upgrading same-origin assets to unavailable HTTPS URLs, fixing the blank screen seen on local ZimaOS addresses.
