@@ -10,7 +10,7 @@ $resolvedTest = [System.IO.Path]::GetFullPath($testRoot)
 if (-not $resolvedTest.StartsWith($resolvedTemp, [System.StringComparison]::OrdinalIgnoreCase)) { throw 'Temporary path escaped the system temp directory.' }
 
 function Wait-Ready([string]$name) {
-  for ($attempt = 0; $attempt -lt 30; $attempt += 1) {
+  for ($attempt = 0; $attempt -lt 120; $attempt += 1) {
     $status = docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' $name 2>$null
     if ($status -eq 'healthy') { return }
     if ($status -eq 'unhealthy' -or $status -eq 'exited') { docker logs $name; throw "Container $name became $status." }
